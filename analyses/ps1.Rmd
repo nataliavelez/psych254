@@ -1,6 +1,6 @@
 ---
 title: 'Psych 254 W15 PS #1'
-author: "Mike Frank"
+author: "Natalia Velez"
 date: "January 11, 2015"
 output: html_document
 ---
@@ -20,6 +20,7 @@ Preliminaries
 I pretty much always clear the workspace and load the same basic helper functions before starting an analysis.
 
 ```{r prelims}
+setwd("~/Documents/Stanford/Classes/W15/Psych 254/psych254_materials/analyses")
 rm(list=ls())
 source("../helper/useful.R")
 ```
@@ -92,8 +93,14 @@ Try renaming some variables using `rename`. A good naming scheme is:
 Try using the `%>%` operator as well. So you will be "piping" `d %>% rename(...)`.
 
 ```{r rename}
-d.tidy %>% rename(c('worker_id', 'condition', 'input_1', 'input_2', 'input_3', 'answer_dog',
-                      'answer_plasma', 'answer_sushi'))
+d.tidy <- rename(d.tidy, workerid = WorkerId,
+       condition = Input.condition,
+       dog_anchor = Input.price1,
+       plasma_anchor = Input.price2,
+       sushi_anchor = Input.price3,
+       dog_cost = Answer.dog_cost,
+       plasma_cost = Answer.plasma_cost,
+       sushi_cost = Answer.sushi_cost)
 ```
 
 
@@ -102,9 +109,10 @@ OK, now for the tricky part. Use the verb *gather* to turn this into a *tidy* da
 HINT: look for online examples!
 
 ```{r gather}
-d.tidy %>% 
-  gather(price_num, price, Input.price1:Input.price3) %>%
-  gather(answer_item, cost, Answer.dog_cost:Answer.sushi_cost)
+d.tidy <- gather(d.tidy, name, cost,
+                 dog_anchor, plasma_anchor, sushi_anchor,
+                 dog_cost, plasma_cost, sushi_cost) %>%
+          separate(name, c("item", "type"), sep = "_")
 ```
 
 
