@@ -1,0 +1,111 @@
+@charset "UTF-8";
+
+*{
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+	
+	font: bold 14px Arial, sans-serif;
+}
+
+#calculator {
+	width: 325px;
+	height: auto;
+	
+	margin: 0;
+	padding: 20px 20px 9px;
+	
+	background: #CCCCCC;
+	border-radius: 3px;
+	box-shadow: 0px 4px #B0B0B0;
+}
+
+/* Top portion */
+.top span.clear {
+	float: left;
+}
+
+/* Screen shadow */
+.top .screen {
+	/* Box */
+	height: 40px;
+	width: 212px;
+	
+	float: right;
+	
+	padding: 0 10px;
+	
+	background: #616161;
+	border-radius: 3px;
+	box-shadow: inset 0px 4px #4E4E4E;
+	
+	/* Text */
+	font-size: 17px;
+	line-height: 40px;
+	color: white;
+	text-align: right;
+	letter-spacing: 1px;
+}
+
+/* Clear floats */
+.keys, .top {overflow: hidden;}
+
+/* Keys */
+.keys span, .top span.clear{
+	float: left;
+	position: relative;
+	top: 0;
+	
+	cursor: pointer;
+	
+	width: 66px;
+	height: 36px;
+	
+	background: white;
+	border-radius: 3px;
+	box-shadow: 0px 4px #B7B7B7;
+	
+	margin: 0 7px 11px 0;
+	
+	color: #181818;
+	line-height: 36px;
+	text-align: center;
+	
+	user-select: none;
+	
+	transition: all 0.2s ease;
+}
+
+.keys span.operator {
+	background: #FFC1C2;
+	box-shadow: 0px 4px #E69192;
+	margin-right: 0;
+}
+
+.keys span.eval {
+	background: #BFF58F;
+	box-shadow: 0px 4px #89B463;
+}
+
+.top span.clear {
+	background: #FCA3A4;
+	box-shadow: 0px 4px #D98788;
+	color: white;
+}
+
+/* Hover effects */
+.keys span:hover {
+	background: #C49CFF;
+	box-shadow: 0px 4px #9775CA;
+	color: #FFFFFF;
+}
+
+.top span.clear:hover {
+	background: #FF8385;
+	box-shadow: 0px 4px #CC6264;
+}
+
+.keys span:active, .top span.clear:active {
+	box-shadow: 0px 0px;
+	top: 4px;
+}

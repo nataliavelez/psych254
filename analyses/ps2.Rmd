@@ -35,23 +35,34 @@ qplot(diamonds$carat, diamonds$price)
 Scatter plots are trivial, and easy to add features to. Modify this plot so that it uses the dataframe rather than working from variables in the general namespace (good to get away from retyping `diamonds$` every time you reference a variable). 
 
 ```{r}
+qplot(carat, price, data = diamonds)
 ```
 
 Try adding clarity and cut, using shape and color as your visual variables. 
 
 ```{r}
+qplot(carat, price, data = diamonds, shape = cut, colour = clarity)
 ```
 
 One of the primary benefits of `ggplot2` is the use of facets - also known as small multiples in the Tufte vocabulary. That last plot was probably hard to read. Facets could make it better. Try adding a `facets = x ~ y` argument. `x ~ y` means row facets are by x, column facets by y. 
 
 ```{r}
+qplot(carat, price, data = diamonds, 
+      facets = clarity ~ cut)
 ```
 
 But facets can also get overwhelming. Try to strike a good balance between color, shape, and faceting.
 
 HINT: `facets = . ~ x` puts x on the columns, but `facets = ~ x` (no dot) *wraps* the facets. These are underlying calls to different functions, `facet_wrap` (no dot) and `facet_grid` (two arguments). 
 
+<div style="color: red;">
+Note: I also changed the color scheme to grayscale, with the intuition that brightness maps intuitively to diamond clarity: 'I1', the lowest grade, is darkest and 'IF', the highest quality grade, is the lightest.
+</div>
+
 ```{r}
+qplot(carat, price, data = diamonds, 
+      colour = clarity,
+      facets = ~ cut) + scale_colour_grey()
 ```
 
 The basic unit of a ggplot plot is a "geom" - a mapping between data (via an "aesthetic") and a particular geometric configuration on coordinate axes. 
@@ -59,16 +70,35 @@ The basic unit of a ggplot plot is a "geom" - a mapping between data (via an "ae
 Let's try some other geoms and manipulate their parameters. First, try a histogram (`geom="hist"`). 
 
 ```{r}
+ggplot(diamonds, aes(x = price)) +
+  geom_histogram() +
+  ggtitle("Distribution of diamond prices (in $)")
+
+ggplot(diamonds, aes(x = carat)) +
+  geom_histogram() +
+  ggtitle("Distribution of diamond mass (in carats)")
 ```
 
 Now facet your histogram by clarity and cut. 
 
+<div style="color:red;">
+Note: I changed the spacing of the x-axis to a logarithmic scale to avoid crowding. I am still not certain whether this is the best way to show the data ()
+</div>
+
 ```{r}
+ggplot(diamonds, aes(x = price)) +
+  geom_histogram() +
+  facet_grid(clarity ~ cut) +
+  scale_x_log10()
 ```
 
 I like a slightly cleaner look to my plots. Luckily, ggplot allows you to add "themes" to your plots. Try doing the same plot but adding `+ theme_bw()` or `+ theme_classic()`. Different themes work better for different applications, in my experience. 
 
 ```{r}
+ggplot(diamonds, aes(x = price)) +
+  geom_histogram() +
+  facet_grid(clarity ~ cut) +
+  theme_classic()
 ```
 
 Part 1B: Exploring ggplot2 using ggplot

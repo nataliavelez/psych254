@@ -1,0 +1,24 @@
+@charset "UTF-8";
+body {
+	font-family: Helvetica, Arial, sans-serif;
+}
+
+.legal {
+	width: 600px;
+	height: auto;
+	margin: 0 auto;
+	padding: 20px;
+	background-color: #CAEAE7;
+	border-radius: 10px;
+	
+}
+
+button {
+	height: 50px;
+	padding: 0 20px;
+	background-color: #BFF58F;
+	border-radius: 5px;
+	border: none;
+	box-shadow: 0 4px #89B463;
+	
+}
