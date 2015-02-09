@@ -1,24 +1,66 @@
 @charset "UTF-8";
 body {
 	font-family: Helvetica, Arial, sans-serif;
+	background-color: #CAEAE7;
+	margin: 0;
+	padding: 0;
+}
+
+h1 {
+	font-family: Quicksand, Helvetica, Arial, sans-serif;
 }
 
 .legal {
-	width: 600px;
+	width: 800px;
 	height: auto;
 	margin: 0 auto;
 	padding: 20px;
-	background-color: #CAEAE7;
+	background-color: #FFEE9F;
 	border-radius: 10px;
 	
 }
 
+#logo {
+	width: 398px;
+	margin: 0 auto 15px auto;
+}
+
 button {
 	height: 50px;
+	font-size: 12pt;
+	width: 200px;
+	display: block;
+	margin: 0 auto;
 	padding: 0 20px;
 	background-color: #BFF58F;
 	border-radius: 5px;
-	border: none;
-	box-shadow: 0 4px #89B463;
-	
+	border: none;	
+}
+
+.slide{
+	background-color: #FFF;
+	padding: 30px;
+}
+
+#i0 {
+	width: 1000px;
+	margin: 0 auto;
+}
+
+.numseq {
+	text-align: center;
+	font-size: 18pt;
+}
+
+input {
+	font-family: Helvetica, Arial, sans-serif;
+	font-size: 18pt;
+	height: 18pt;
+	width: 1.5em;
+	border-style: solid;
+	text-align: center;
+}
+
+#sequence {
+	text-align: center;
 }
