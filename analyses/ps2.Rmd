@@ -261,7 +261,7 @@ d.summ <- ds %>%
   dplyr::summarise(se = sem(f),
                    facilitation = mean(f))
 
-kable(data.frame(d.summ))
+pander(data.frame(d.summ))
 ```
 
 Now plot this summary, giving more or less the bar plot that Sklar et al. gave (though I would keep operation as a variable here. Make sure you get some error bars on there (e.g. `geom_errorbar` or `geom_linerange`). 
@@ -304,7 +304,7 @@ In the original analysis, Sklar et al. test whether the mean facilitation score 
 
 Another, potentially more reliable test of their claim is to compare participants' reaction time on congruent and incongruent trials. If people can do arithmetic non-consciously, then they should be faster to respond on congruent trials than incongruent trials. According to Sklar et al.'s original results, we should only find this effect on subtraction trials. (Subseqent experiments in Sklar et al.'s original result help resolve why there is no facilitation on addition trials, but we will ignore this issue here.)
 
-Thus, rather than consolidating reaction times in a single 'facilitation' score, the plot below shows participants' average reaction times in congruent and incongruent trials. By inspection, reaction time is so variable that it is not obvious whether there is a significant difference between reaction times for congruent and incongruent trials. In the analyses below, I compare congruent and incongruent trials using a linear mixed model.
+Thus, rather than consolidating reaction times in a single 'facilitation' score, the plot below shows participants' average reaction times in congruent and incongruent trials. (Note that the y-axis is truncated and begins at 600 ms to facilitate comparison.) By inspection, reaction time is so variable that it is not obvious whether there is a significant difference between reaction times for congruent and incongruent trials. In the analyses below, I compare congruent and incongruent trials using a linear mixed model.
 
 **References:**
 Peter, J. P., Churchill Jr, G. A., & Brown, T. J. (1993). Caution in the use of difference scores in consumer research. *Journal of consumer research,* 655-662.
@@ -332,14 +332,14 @@ Challenge problem: Do you find any statistical support for Sklar et al.'s findin
 
 ```{r}
 library(lme4)
-kable(anova(lmer(rt ~ congruent + operand + congruent:operand + (1|subid), ds)))
+pander(anova(lmer(rt ~ congruent + operand + congruent:operand + (1|subid), ds)))
 
-kable(anova(lmer(rt ~ congruent + congruent:presentation.time + (1|subid), 
+pander(anova(lmer(rt ~ congruent + congruent:presentation.time + (1|subid), 
            ds[ds$operand=="subtraction",])))
 ```
 
 <div style="padding: 10px; background-color: #fff3ab; border-radius: 5px;">
 **Conclusions:** Aggregating over both subtraction and addition trials, there was no effect of congruence on reaction time $(F(1,15) = 1.41, p = `r round(pf(1.41, 1, 15, lower.tail = F),2)`). However, there was a significant effect of operand (F(1,15) = 16.71, p < 0.001) and a significant interaction between congruence and operand (F(1,15) = 5.43, `r round(pf(5.43, 1, 15, lower.tail = F),2)`). In particular, reaction times for incongruent primes is slower than congruent primes on subtraction trials alone; there is no such relationship in addition trials.
 
-I next compared reaction times for congruent and incongruent primes in subtraction trials only. Here, I found both a significant effect of congruence (F(1, 15) = 7.22, p = `r round(pf(7.22, 1, 15, lower.tail = F),2)`) and no interaction between congruence and reaction time (F(1, 15) = 1.42, p = `r round(pf(1.42, 1, 15, lower.tail = F),2)`). These results suggest that, in subtraction trials, people identify numbers more quickly when they are the correct response to a subliminally presented subtraction equation---therefore, they are evaluating the expression subconsciously. Moreover, this effect persists regardless of how long the prime was presented, suggesting both that (1) participants can evaluate the expression in between 1.7-2 seconds and that (2) the prime induced by the expression does not decay within that time.
+I next compared reaction times for congruent and incongruent primes in subtraction trials only. Here, I found both a significant effect of congruence (F(1, 15) = 7.22, p = `r round(pf(7.22, 1, 15, lower.tail = F),2)`) and no interaction between congruence and reaction time (F(1, 15) = 1.42, p = `r round(pf(1.42, 1, 15, lower.tail = F),2)`). These results suggest that, in subtraction trials, people identify numbers more quickly when they are the correct response to a subliminally presented subtraction equation---therefore, they are evaluating the expression subconsciously. Moreover, this effect persists regardless of how long the prime was presented, suggesting both that (1) participants can evaluate the expression in between 1.7-2 seconds and that (2) the prime induced by the expression does not decay within that time. 
 </div>

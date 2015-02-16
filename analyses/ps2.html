@@ -332,15 +332,49 @@ ggplot(sub.summ, aes(x = subjective.test, y = avg, fill = subjective.test)) +
   dplyr::summarise(se = sem(f),
                    facilitation = mean(f))
 
-kable(data.frame(d.summ))</code></pre>
-<pre><code>## 
-## 
-## |presentation.time |operand     |    se| facilitation|
-## |:-----------------|:-----------|-----:|------------:|
-## |1700              |addition    | 8.902|      -13.929|
-## |1700              |subtraction | 6.275|       20.999|
-## |2000              |addition    | 5.022|        4.026|
-## |2000              |subtraction | 4.447|        9.976|</code></pre>
+pander(data.frame(d.summ))</code></pre>
+<table>
+<colgroup>
+<col width="27%"></col>
+<col width="16%"></col>
+<col width="8%"></col>
+<col width="19%"></col>
+</colgroup>
+<thead>
+<tr class="header">
+<th align="center">presentation.time</th>
+<th align="center">operand</th>
+<th align="center">se</th>
+<th align="center">facilitation</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="center">1700</td>
+<td align="center">addition</td>
+<td align="center">8.902</td>
+<td align="center">-13.93</td>
+</tr>
+<tr class="even">
+<td align="center">1700</td>
+<td align="center">subtraction</td>
+<td align="center">6.275</td>
+<td align="center">21</td>
+</tr>
+<tr class="odd">
+<td align="center">2000</td>
+<td align="center">addition</td>
+<td align="center">5.022</td>
+<td align="center">4.026</td>
+</tr>
+<tr class="even">
+<td align="center">2000</td>
+<td align="center">subtraction</td>
+<td align="center">4.447</td>
+<td align="center">9.976</td>
+</tr>
+</tbody>
+</table>
 <p>Now plot this summary, giving more or less the bar plot that Sklar et al. gave (though I would keep operation as a variable here. Make sure you get some error bars on there (e.g. <code>geom_errorbar</code> or <code>geom_linerange</code>).</p>
 <pre class="r"><code>ggplot(d.summ, aes(x = presentation.time, y = facilitation, fill = operand)) +
   geom_bar(stat=&quot;identity&quot;) +
@@ -368,7 +402,7 @@ From these data, it seems that, indeed, showing participants CFS-masked equation
 <div style="padding: 10px; background-color: #fff3ab; border-radius: 5px;">
 <p>In the original analysis, Sklar et al. test whether the mean facilitation score (i.e., mean RT on incongruent trials - mean RT on congruent trials) was different from 0. However, difference scores suffer from a host of methodological problems: for example, they are less reliable than their component variables, its variance increases with its value, and they hide correlations between measures (for an overview, see Peter et al., 1993).</p>
 <p>Another, potentially more reliable test of their claim is to compare participants’ reaction time on congruent and incongruent trials. If people can do arithmetic non-consciously, then they should be faster to respond on congruent trials than incongruent trials. According to Sklar et al.’s original results, we should only find this effect on subtraction trials. (Subseqent experiments in Sklar et al.’s original result help resolve why there is no facilitation on addition trials, but we will ignore this issue here.)</p>
-<p>Thus, rather than consolidating reaction times in a single ‘facilitation’ score, the plot below shows participants’ average reaction times in congruent and incongruent trials. By inspection, reaction time is so variable that it is not obvious whether there is a significant difference between reaction times for congruent and incongruent trials. In the analyses below, I compare congruent and incongruent trials using a linear mixed model.</p>
+<p>Thus, rather than consolidating reaction times in a single ‘facilitation’ score, the plot below shows participants’ average reaction times in congruent and incongruent trials. (Note that the y-axis is truncated and begins at 600 ms to facilitate comparison.) By inspection, reaction time is so variable that it is not obvious whether there is a significant difference between reaction times for congruent and incongruent trials. In the analyses below, I compare congruent and incongruent trials using a linear mixed model.</p>
 <strong>References:</strong> Peter, J. P., Churchill Jr, G. A., &amp; Brown, T. J. (1993). Caution in the use of difference scores in consumer research. <em>Journal of consumer research,</em> 655-662.
 </div>
 <pre class="r"><code>d.summ2 &lt;- ds %&gt;%
@@ -398,22 +432,104 @@ ggplot(d.summ2, aes(x = presentation.time, y = rt, fill = congruent)) +
 ##     expand
 ## 
 ## Loading required package: Rcpp</code></pre>
-<pre class="r"><code>kable(anova(lmer(rt ~ congruent + operand + congruent:operand + (1|subid), ds)))</code></pre>
-<pre><code>## 
-## 
-## |                  | Df| Sum Sq| Mean Sq| F value|
-## |:-----------------|--:|------:|-------:|-------:|
-## |congruent         |  1|  15764|   15764|   1.410|
-## |operand           |  1| 186828|  186828|  16.708|
-## |congruent:operand |  1|  60682|   60682|   5.427|</code></pre>
-<pre class="r"><code>kable(anova(lmer(rt ~ congruent + congruent:presentation.time + (1|subid), 
+<pre class="r"><code>pander(anova(lmer(rt ~ congruent + operand + congruent:operand + (1|subid), ds)))</code></pre>
+<table>
+<caption>Analysis of Variance Table</caption>
+<colgroup>
+<col width="33%"></col>
+<col width="6%"></col>
+<col width="12%"></col>
+<col width="13%"></col>
+<col width="13%"></col>
+</colgroup>
+<thead>
+<tr class="header">
+<th align="center"> </th>
+<th align="center">Df</th>
+<th align="center">Sum Sq</th>
+<th align="center">Mean Sq</th>
+<th align="center">F value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="center"><strong>congruent</strong></td>
+<td align="center">1</td>
+<td align="center">15764</td>
+<td align="center">15764</td>
+<td align="center">1.41</td>
+</tr>
+<tr class="even">
+<td align="center"><strong>operand</strong></td>
+<td align="center">1</td>
+<td align="center">186828</td>
+<td align="center">186828</td>
+<td align="center">16.71</td>
+</tr>
+<tr class="odd">
+<td align="center"><strong>congruent:operand</strong></td>
+<td align="center">1</td>
+<td align="center">60682</td>
+<td align="center">60682</td>
+<td align="center">5.427</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>pander(anova(lmer(rt ~ congruent + congruent:presentation.time + (1|subid), 
            ds[ds$operand==&quot;subtraction&quot;,])))</code></pre>
-<pre><code>## 
-## 
-## |                            | Df| Sum Sq| Mean Sq| F value|
-## |:---------------------------|--:|------:|-------:|-------:|
-## |congruent                   |  1|  68379|   68379|   7.223|
-## |congruent:presentation.time |  2|  26796|   13398|   1.415|</code></pre>
+<table>
+<caption>Analysis of Variance Table (continued below)</caption>
+<colgroup>
+<col width="47%"></col>
+<col width="6%"></col>
+<col width="12%"></col>
+<col width="12%"></col>
+</colgroup>
+<thead>
+<tr class="header">
+<th align="center"> </th>
+<th align="center">Df</th>
+<th align="center">Sum Sq</th>
+<th align="center">Mean Sq</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="center"><strong>congruent</strong></td>
+<td align="center">1</td>
+<td align="center">68379</td>
+<td align="center">68379</td>
+</tr>
+<tr class="even">
+<td align="center"><strong>congruent:presentation.time</strong></td>
+<td align="center">2</td>
+<td align="center">26796</td>
+<td align="center">13398</td>
+</tr>
+</tbody>
+</table>
+<table>
+<colgroup>
+<col width="47%"></col>
+<col width="12%"></col>
+</colgroup>
+<thead>
+<tr class="header">
+<th align="center"> </th>
+<th align="center">F value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="center"><strong>congruent</strong></td>
+<td align="center">7.223</td>
+</tr>
+<tr class="even">
+<td align="center"><strong>congruent:presentation.time</strong></td>
+<td align="center">1.415</td>
+</tr>
+</tbody>
+</table>
 <div style="padding: 10px; background-color: #fff3ab; border-radius: 5px;">
 <p><strong>Conclusions:</strong> Aggregating over both subtraction and addition trials, there was no effect of congruence on reaction time $(F(1,15) = 1.41, p = 0.25). However, there was a significant effect of operand (F(1,15) = 16.71, p &lt; 0.001) and a significant interaction between congruence and operand (F(1,15) = 5.43, 0.03). In particular, reaction times for incongruent primes is slower than congruent primes on subtraction trials alone; there is no such relationship in addition trials.</p>
 I next compared reaction times for congruent and incongruent primes in subtraction trials only. Here, I found both a significant effect of congruence (F(1, 15) = 7.22, p = 0.02) and no interaction between congruence and reaction time (F(1, 15) = 1.42, p = 0.25). These results suggest that, in subtraction trials, people identify numbers more quickly when they are the correct response to a subliminally presented subtraction equation—therefore, they are evaluating the expression subconsciously. Moreover, this effect persists regardless of how long the prime was presented, suggesting both that (1) participants can evaluate the expression in between 1.7-2 seconds and that (2) the prime induced by the expression does not decay within that time.
