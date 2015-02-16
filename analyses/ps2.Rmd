@@ -1,6 +1,6 @@
 ---
 title: 'Psych 254 W15 PS #2'
-author: "Mike Frank"
+author: "Mike Frank, Natalia Vélez"
 date: "February 4, 2015"
 output: html_document
 ---
@@ -19,8 +19,9 @@ I've adapted this for psych 254 purposes
 First install and load the package.
 
 ```{r}
-install.packages("ggplot2")
 library(ggplot2)
+library(knitr)
+library(pander)
 ```
 
 Now we're going to use qplot. qplot is the easy interface, meant to replace plot. You can give it simple `qplot(x,y)` examples, or slightly more complex examples like `qplot(x, y, col=grp, data=d)`. 
@@ -55,7 +56,7 @@ But facets can also get overwhelming. Try to strike a good balance between color
 
 HINT: `facets = . ~ x` puts x on the columns, but `facets = ~ x` (no dot) *wraps* the facets. These are underlying calls to different functions, `facet_wrap` (no dot) and `facet_grid` (two arguments). 
 
-<div style="color: red;">
+<div style="background-color: ;">
 Note: I also changed the color scheme to grayscale, with the intuition that brightness maps intuitively to diamond clarity: 'I1', the lowest grade, is darkest and 'IF', the highest quality grade, is the lightest.
 </div>
 
@@ -69,7 +70,7 @@ The basic unit of a ggplot plot is a "geom" - a mapping between data (via an "ae
 
 Let's try some other geoms and manipulate their parameters. First, try a histogram (`geom="hist"`). 
 
-```{r}
+```{r Plot, warning=FALSE}
 ggplot(diamonds, aes(x = price)) +
   geom_histogram() +
   ggtitle("Distribution of diamond prices (in $)")
@@ -81,24 +82,19 @@ ggplot(diamonds, aes(x = carat)) +
 
 Now facet your histogram by clarity and cut. 
 
-<div style="color:red;">
-Note: I changed the spacing of the x-axis to a logarithmic scale to avoid crowding. I am still not certain whether this is the best way to show the data ()
-</div>
-
-```{r}
+```{r Plot2, warning=FALSE}
 ggplot(diamonds, aes(x = price)) +
   geom_histogram() +
-  facet_grid(clarity ~ cut) +
-  scale_x_log10()
+  facet_grid(clarity ~ cut)
 ```
 
 I like a slightly cleaner look to my plots. Luckily, ggplot allows you to add "themes" to your plots. Try doing the same plot but adding `+ theme_bw()` or `+ theme_classic()`. Different themes work better for different applications, in my experience. 
 
-```{r}
+```{r Plot3, warning=FALSE}
 ggplot(diamonds, aes(x = price)) +
   geom_histogram() +
   facet_grid(clarity ~ cut) +
-  theme_classic()
+  theme_bw()
 ```
 
 Part 1B: Exploring ggplot2 using ggplot
@@ -119,12 +115,18 @@ Try writing this as a single set of additions (e.g. one line of R code, though y
 
 
 ```{r}
+ggplot(diamonds, aes(x=carat, y=price)) +
+  geom_point(aes(colour = carat))
 ```
 
 
 You can also set the aesthetic separately for each geom, and make some great plots this way. Though this can get complicated. Try using `ggplot` to build a histogram of prices. 
 
-```{r}
+```{r Plot4, warning=FALSE}
+ggplot(diamonds, aes(x=price)) +
+  geom_histogram(aes(fill=cut)) +
+  scale_fill_grey() +
+  theme_bw()
 ```
 
 Part 2: Diving into real data: Sklar et al. (2012)
@@ -136,7 +138,9 @@ First let's set up a few preliminaries.
 
 ```{r}
 library(tidyr)
+library(plyr)
 library(dplyr)
+library(ggplot2)
 
 sem <- function(x) {sd(x) / sqrt(length(x))}
 ci95 <- function(x) {sem(x) * 1.96}
@@ -156,16 +160,27 @@ d.b <- read.csv("../data/sklar_expt6b_corrected.csv")
 Gather these datasets into long form and get rid of the Xs in the headers.
 
 ```{r}
+da.tidy <- d.a %>%
+  gather("subid", "rt", X1:X21) %>%
+  select(prime, operand, congruent, distance, counterbalance, subid, rt)
+da.tidy$subid <- extract_numeric(da.tidy$subid)
+
+db.tidy <- d.b %>%
+  gather("subid", "rt", X22:X42) %>%
+  select(prime, operand, congruent, distance, counterbalance, subid, rt)
+db.tidy$subid <- extract_numeric(db.tidy$subid)
 ```
 
 Bind these together. Check out `bind_rows`.
 
 ```{r}
+d.tidy <- rbind(da.tidy, db.tidy)
 ```
 
 Merge these with subject info. You will need to look into merge and its relatives, `left_join` and `right_join`. Call this dataframe `d`, by convention. 
 
 ```{r}
+d <- left_join(subinfo, d.tidy)
 ```
 
 Clean up the factor structure.
@@ -173,6 +188,8 @@ Clean up the factor structure.
 ```{r}
 d$presentation.time <- factor(d$presentation.time)
 levels(d$operand) <- c("addition","subtraction")
+subinfo$subjective.test <- factor(subinfo$subjective.test, labels=c("False", "True"))
+d$subid <- factor(d$subid)
 ```
 
 Data Analysis Preliminaries
@@ -180,22 +197,49 @@ Data Analysis Preliminaries
 
 Examine the basic properties of the dataset. First, take a histogram.
 
-```{r}
+```{r Plot5, warning=FALSE}
+ggplot(d, aes(x = rt)) +
+  geom_histogram()
 ```
 
 Challenge question: what is the sample rate of the input device they are using to gather RTs?
 
 ```{r}
+rts <- unique(sort(d$rt))
+min(rts[2:length(rts)] - rts[1:length(rts)-1])
 ```
+
+**Answer:** The smallest difference in reaction times that the input device can resolve is 1 msec. Therefore, the sample rate is 1000 Hz.
 
 Sklar et al. did two manipulation checks. Subjective - asking participants whether they saw the primes - and objective - asking them to report the parity of the primes (even or odd) to find out if they could actually read the primes when they tried. Examine both the unconscious and conscious manipulation checks (this information is stored in subinfo). What do you see? Are they related to one another?
 
-```{r} 
+```{r}
+sub.summ <- subinfo %>%
+  group_by(subjective.test) %>%
+  dplyr::summarise(avg = mean(objective.test),
+            sd = sd(objective.test),
+            n = length(objective.test),
+            se = sem(objective.test))
+
+ggplot(sub.summ, aes(x = subjective.test, y = avg, fill = subjective.test)) +
+  geom_bar(stat="identity") +
+  geom_errorbar(aes(ymin = avg - se, ymax = avg + se), width = 0.1) +
+  geom_abline(intercept = 0.5, slope = 0, colour = "gray", linetype = "dashed",
+              size = 2) + 
+  xlab("Saw primes?") +
+  ylab("Proportion correct parity judgments") +
+  theme_bw() +
+  guides(fill = F) 
 ```
+
+<div style="padding: 10px; background-color: #fff3ab; border-radius: 5px;">
+**Conclusion:** Participants who reported that they could see the primes were above chance when judging the parity of the primes (one sample t-test, t(20) = 6.38, p < 0.001). Conversely, participants who couldn't see the primes were at chance (one sample t-test, t(20) = 1.70, p = 0.10). Therefore, participants who *thought* they could see the primes could actually read them when they tried.
+</div>
 
 OK, let's turn back to the measure and implement Sklar et al.'s exclusion criterion. You need to have said you couldn't see (subjective test) and also be not significantly above chance on the objective test (< .6 correct). Call your new data frame `ds`.
 
 ```{r}
+ds <- with(d, d[subjective.test == 0 & objective.test < .6,])
 ```
 
 Sklar et al.'s analysis
@@ -206,18 +250,48 @@ Sklar et al. show a plot of a "facilitation effect" - the time to respond to inc
 HINT: first take averages within subjects, then compute your error bars across participants, using the `sem` function (defined above). 
 
 ```{r}
+d.summ <- ds %>%
+  group_by(presentation.time, subid, congruent, operand) %>%
+  dplyr::summarise(avg = mean(rt, na.rm = T)) %>%
+  ungroup() %>%
+  spread(congruent, avg) %>%
+  group_by(presentation.time, subid, operand) %>%
+  dplyr::summarise(f = mean(no)-mean(yes)) %>%
+  group_by(presentation.time, operand, add = F) %>%
+  dplyr::summarise(se = sem(f),
+                   facilitation = mean(f))
+
+kable(data.frame(d.summ))
 ```
 
 Now plot this summary, giving more or less the bar plot that Sklar et al. gave (though I would keep operation as a variable here. Make sure you get some error bars on there (e.g. `geom_errorbar` or `geom_linerange`). 
 
 ```{r}
+ggplot(d.summ, aes(x = presentation.time, y = facilitation, fill = operand)) +
+  geom_bar(stat="identity") +
+  geom_errorbar(width = .1, aes(ymin = facilitation - se, ymax = facilitation + se)) +
+  facet_grid(. ~ operand) +
+  guides(fill = F) +
+  xlab("Presentation time") +
+  ylab("Facilitation")
 ```
 
 What do you see here? How close is it to what Sklar et al. report? Do the error bars match? How do you interpret these data? 
 
+<div style="padding: 10px; background-color: #fff3ab; border-radius: 5px;">
+There are two notable differences between this plot and Sklar et al's report:
+
+1. Sklar et al. omit data for addition trials because there was no effect of priming in this condition (P > 0.33). The authors' justify this decision by reasoning that "because addition is easier and solved faster, the solutions of the addition equations had already decayed when the targets appeared on screen."
+
+2. The error bars shown in Sklar et al.'s report denote values *within 1 standard error* of the mean. Here, error bars denote $\pm 1$ standard error of the mean, which is the more common usage.
+
+From these data, it seems that, indeed, showing participants CFS-masked equations of *added* numbers does not prime them to identify the correct answer faster (e.g., showing '1+3+5' does not facilitate identification of '9'). Regardless of presentation time, participant's scores during congruent trials were not significantly faster than their reactions during incongruent trials---that is, their 'facilitation' score was not different from 0. Conversely, both groups of participants showed priming in the subtraction trials, regardless of presentation time. These results lend support to the authors' claim that subliminally presented arithmetic expressions, which are widely believed to require consciousness to be evaluated, prime participants' identification of numbers.
+</div>
+
 Challenge problem: verify Sklar et al.'s claim about the relationship between RT and the objective manipulation check.
 
 ```{r}
+
 ```
 
 Your own analysis
@@ -225,10 +299,47 @@ Your own analysis
 
 Show us what you would do with these data, operating from first principles. What's the fairest plot showing a test of Sklar et al.'s original hypothesis that people can do arithmetic "non-consciously"?
 
+<div style="padding: 10px; background-color: #fff3ab; border-radius: 5px;">
+In the original analysis, Sklar et al. test whether the mean facilitation score (i.e., mean RT on incongruent trials - mean RT on congruent trials) was different from 0. However, difference scores suffer from a host of methodological problems: for example, they are less reliable than their component variables, its variance increases with its value, and they hide correlations between measures (for an overview, see Peter et al., 1993). 
+
+Another, potentially more reliable test of their claim is to compare participants' reaction time on congruent and incongruent trials. If people can do arithmetic non-consciously, then they should be faster to respond on congruent trials than incongruent trials. According to Sklar et al.'s original results, we should only find this effect on subtraction trials. (Subseqent experiments in Sklar et al.'s original result help resolve why there is no facilitation on addition trials, but we will ignore this issue here.)
+
+Thus, rather than consolidating reaction times in a single 'facilitation' score, the plot below shows participants' average reaction times in congruent and incongruent trials. By inspection, reaction time is so variable that it is not obvious whether there is a significant difference between reaction times for congruent and incongruent trials. In the analyses below, I compare congruent and incongruent trials using a linear mixed model.
+
+**References:**
+Peter, J. P., Churchill Jr, G. A., & Brown, T. J. (1993). Caution in the use of difference scores in consumer research. *Journal of consumer research,* 655-662.
+</div>
+
 ```{r}
+d.summ2 <- ds %>%
+  group_by(presentation.time, subid, congruent, operand) %>%
+  dplyr::summarise(avg = mean(rt, na.rm = T)) %>%
+  group_by(presentation.time, congruent, operand) %>%
+  dplyr::summarize(rt = mean(avg),
+                   se = sem(avg))
+
+ggplot(d.summ2, aes(x = presentation.time, y = rt, fill = congruent)) +
+  geom_bar(stat = "identity", position=position_dodge()) +
+  geom_errorbar(width = 0.1, position =  position_dodge(width = 0.75), 
+                aes(ymin = rt-se, ymax = rt+se)) +
+  facet_wrap( ~ operand, ncol = 2) +
+  coord_cartesian(ylim=c(500,800)) +
+  ylab("Reaction time") +
+  xlab("Presentation time")
 ```
 
 Challenge problem: Do you find any statistical support for Sklar et al.'s findings?
 
 ```{r}
+library(lme4)
+kable(anova(lmer(rt ~ congruent + operand + congruent:operand + (1|subid), ds)))
+
+kable(anova(lmer(rt ~ congruent + congruent:presentation.time + (1|subid), 
+           ds[ds$operand=="subtraction",])))
 ```
+
+<div style="padding: 10px; background-color: #fff3ab; border-radius: 5px;">
+**Conclusions:** Aggregating over both subtraction and addition trials, there was no effect of congruence on reaction time $(F(1,15) = 1.41, p = `r round(pf(1.41, 1, 15, lower.tail = F),2)`). However, there was a significant effect of operand (F(1,15) = 16.71, p < 0.001) and a significant interaction between congruence and operand (F(1,15) = 5.43, `r round(pf(5.43, 1, 15, lower.tail = F),2)`). In particular, reaction times for incongruent primes is slower than congruent primes on subtraction trials alone; there is no such relationship in addition trials.
+
+I next compared reaction times for congruent and incongruent primes in subtraction trials only. Here, I found both a significant effect of congruence (F(1, 15) = 7.22, p = `r round(pf(7.22, 1, 15, lower.tail = F),2)`) and no interaction between congruence and reaction time (F(1, 15) = 1.42, p = `r round(pf(1.42, 1, 15, lower.tail = F),2)`). These results suggest that, in subtraction trials, people identify numbers more quickly when they are the correct response to a subliminally presented subtraction equation---therefore, they are evaluating the expression subconsciously. Moreover, this effect persists regardless of how long the prime was presented, suggesting both that (1) participants can evaluate the expression in between 1.7-2 seconds and that (2) the prime induced by the expression does not decay within that time.
+</div>
