@@ -1,12 +1,3 @@
-/* To-do:
-- Separate training/test phases (experiment currently has a very short training phase for mock-up)
-- Assign to condition (baseline/xC+K/sum-last-two, where baseline skips training phase)
-- Randomly present sequences (create two lists of sequences, sample a certain number without replacement 	from each)
-- Only natural numbers accepted in input box
-- Feedback shown after trial
-- Bug: progress bar shows up in instructions page
-*/
-
 function make_slides(f) {
   var   slides = {};
 
@@ -75,6 +66,7 @@ function make_slides(f) {
 	 
 	 log_responses : function() {
 		 exp.data_trials.push({
+             "sequence": $(".numseq").html(),
 			 "response": $("#ans").val(),
              "answer": this.stim.answer,
              "rule": this.stim.rule,
@@ -84,7 +76,48 @@ function make_slides(f) {
 			
 	 }
   });
+    
+    slides.test_instruct = slide({
+        name: "test_instruct",
+        button: function() {
+            exp.go();
+        }
+    });
 
+    slides.testseq = slide({
+        name: "testseq",
+        present: [
+            {num_seq: "1, 2, 3, "},
+            {num_seq: "3, 6, 9, "},
+            {num_seq: "5, 10, 15, "},
+            {num_seq: "2, 4, 6, "}
+        ],
+        
+        present_handle: function(stim) {
+            console.log("Ready!");
+            this.stim = stim;
+            $(".numseq").html(stim.num_seq);
+            exp.trialT = Date.now();
+        },
+        
+        nextTrial: function () {
+          exp.RT = Date.now() - exp.trialT;
+          this.log_responses();
+          $("#testans").val("");
+            $("#rule").val("");
+          _stream.apply(this);
+        },
+        
+        log_responses : function() {
+            exp.data_trials.push({
+                "test_seq": $(".numseq").html(),
+                "test_guess": $("#testans").val(),
+                "test_rule": $("#rule").val(),
+                "test_rt_in_seconds": (Date.now() - exp.trialT)/1000
+			 });
+        }
+    });
+    
   slides.thanks = slide({
     name : "thanks",
     start : function() {
@@ -118,7 +151,7 @@ function init() {
         screenUW: exp.width
     };
     //blocks of the experiment:
-    exp.structure=["i0", "sequence", "thanks"]; // add test section
+    exp.structure=["i0", "sequence", "test_instruct", "testseq", "thanks"]; // add test section
   
     exp.data_trials = [];
     //make corresponding slides:
