@@ -66,7 +66,7 @@
 <div class="slide" id = "test_instruct">
     <div id = "wrapper">
     <h1>You're doing great!</h1>
-    <p>In this part, again you see <strong>21</strong> more number sequences, but now you get to make a choice to help you figure out the underlying rule! You get to choose a number and the program will tell you if it is the next number in the sequence. Remember, more than one rule could fit the sequence you see, so you should pick the number that helps you figure out the underlying rule the best.</p> 
+    <p>In this part, you will see <strong>21</strong> more number sequences, but now you get to make a choice to help you figure out the underlying rule! Remember, more than one rule could fit the sequence you see, so you should pick the number that helps you figure out the underlying rule the best.</p> 
     <p>When the sequence appears on the screen, you will fill in two things: your best guess at the underlying rule and the next number in the sequence that will best help you figure out the rule. For your guess of the rule, please do not write things like "don't know" or gibberish. For the next number choice, please limit your responses to finite integers (e.g., numbers like -5 or 10); decimals are not acceptable. Feedback from the program will not actually be given, but please make your choices as if it were given.</p>
     <button onclick="_s.button()" id="continue">Continue</button>
     </div>
@@ -89,22 +89,51 @@
 </div>
 
 <div class="slide" id="thanks">
-    <h1>Thanks for your time!</h1>
-    
-    <p>This experiment is currently a work in progress. While the main experiment flow has been     fleshed out, there are several features missing from this version that will be present in the final experiment. In roughly decreasing order of importance:</p>
-    
-    <ul>
-        <li>Randomizing trials</li>
-        <li>Loading full set of number sequences 
-            (these have been generously provided by Joseph Austerweil)</li>
-        <li>Adding a delay before 'continue' button works</li>
-        <li>Demographics/feedback questionnaire on the final page</li>
-    </ul>
-    
-    <p>To provide feedback, please contact Natalia Vélez (nvelez [at] stanford [dot] edu). Thanks!</p>
-    
-    <p>(Please scroll down for debug mode output.)</p>
-    </div>
+        <h1>Thanks for your time!</h1>
+      <p class="info">Answering these questions is optional, but will help us understand your answers.</p>
+      <p>Did you read the instructions and do you think you did the HIT correctly?</p>
+      <label><input type="radio"  name="assess" value="No"/>No</label>
+      <label><input type="radio"  name="assess" value="Yes"/>Yes</label>
+      <label><input type="radio"  name="assess" value="Confused"/>I was confused</label>
+
+      <p>Gender:
+        <select id="gender">
+          <label><option value=""/></label>
+          <label><option value="Male"/>Male</label>
+          <label><option value="Female"/>Female</label>
+          <label><option value="Other"/>Other</label>
+        </select>
+      </p>
+
+      <p>Age: <input type="text" id="age"/></p>
+
+      <p>Level Of Education:
+        <select id="education">
+          <label><option value="-1"/></label>
+          <label><option value="0"/>Some High School</label>
+          <label><option value="1"/>Graduated High School</label>
+          <label><option value="2"/>Some College</label>
+          <label><option value="3"/>Graduated College</label>
+          <label><option value="4"/>Hold a higher degree</label>
+        </select>
+      </p>
+
+      <p>Native Language: <input type="text" id="language"/></p>
+      <label>(the language(s) spoken at home when you were a child)</label>
+
+      <p>Did you enjoy the hit?</p>
+      <select id="enjoyment">
+        <label><option value="-1"></option></label>
+        <label><option value="0">Worse than the Average HIT</option></label>
+        <label><option value="1" >An Average HIT</option></label>
+        <label><option value="2">Better than average HIT</option></label>
+      </select>
+
+      <p>We would be interested in any comments you have about this experiment. Please type them here:</p>
+      <textarea id="comments" rows="3" cols="50"></textarea>
+      <br/>
+      <button onclick="_s.submit()">Submit</button>
+  </div>
     
 </body>
 </html>

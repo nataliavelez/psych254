@@ -1,3 +1,82 @@
+/* Helper functions */
+
+function randint(maxn) {
+    return Math.floor((Math.random() * maxn) + 1);
+}
+
+function shuffle(array) {
+    var counter = array.length, temp, index;
+
+    // While there are elements in the array
+    while (counter > 0) {
+        index = Math.floor(Math.random() * counter);
+        counter--;
+
+        temp = array[counter];
+        array[counter] = array[index];
+        array[index] = temp;
+    }
+
+    return array;
+}
+
+/* Generate number sequences */
+function xkc() {
+    var seq = [randint(10)]; // seed
+    var k = (randint(10)-1)*Math.round(Math.random())+1; // coefficient
+    var c = randint(10); // intercept
+    
+    // Add to sequence using rule
+    for (var i = 1; i < 5; i++) {
+        seq[i] = Math.max(k,1)*seq[i-1]+c;
+    }
+    
+    // Return sequence object
+    return {num_seq: seq.slice(0, -1).join(", ")+", ",
+            answer: seq.slice(-1).toString(),
+            rule: ((k == 1)? "Add " + c + " to each number":
+                    "Multiply by " + k + " and add " + c)};
+}
+
+function sumtwo() {
+    var seq = [randint(20), randint(20)]; // Seed
+    seq.sort(function(a, b){return a-b});
+    
+    for (var i = 2; i < 5; i++) {
+        seq[i] = seq[i-2] + seq[i-1]; // Apply sum-two rule
+    }
+    
+    // Return sequence object
+    return {num_seq: seq.slice(0, -1).join(", ")+", ",
+            answer: seq.slice(-1).toString(),
+            rule: "Sum the last two numbers"};
+}
+
+/* Assemble sequences */
+function makeseqs(condition) {
+    
+    var seq = [];
+    var conds = {"xkc": 11,
+                 "sumtwo": 89};
+    
+    for (i = 0; i < conds[condition]; i++) {
+        seq.push(sumtwo());
+    }
+    
+    while (seq.length < 100) {
+        var test = xkc();
+        if (test.answer < 200) {
+            seq.push(test);
+        }
+    }
+    
+    seq = shuffle(seq);
+    
+    return seq
+
+}
+
+
 function make_slides(f) {
   var   slides = {};
 
@@ -15,13 +94,7 @@ function make_slides(f) {
 	  (right now, I have not implemented condition assignment yet, and
 	  the order in which sequences are presented is fixed. both will be changed soon.) */
 	 
-	 present : [
-	 	{num_seq: "5, 15, 20, ", rule: "add the last two numbers", answer: "35"},
-		{num_seq: "1, 2, 4, ", rule: "double the last number", answer: "8"},
-		{num_seq: "2, 6, 14, ", rule: "double the last number and add 2", answer: "30"},
-		{num_seq: "20, 30, 50, ", rule: "add the last two numbers", answer: "80"},
-		{num_seq: "1, 4, 13, 40, ", rule: "triple the last number and add 1", answer: "121"}
-	 ],
+	 present : makeseqs(exp.condition),
 	 
 	 present_handle: function(stim) {
          $("#submit").show();
@@ -86,12 +159,29 @@ function make_slides(f) {
 
     slides.testseq = slide({
         name: "testseq",
-        present: [
-            {num_seq: "1, 2, 3, "},
-            {num_seq: "3, 6, 9, "},
-            {num_seq: "5, 10, 15, "},
-            {num_seq: "2, 4, 6, "}
-        ],
+        present: shuffle([
+            {num_seq: "1, 2, 3, "}, // 1
+            {num_seq: "3, 6, 9, "}, // 2
+            {num_seq: "8, 16, 24, "}, // 3
+            {num_seq: "5, 10, 15, "}, // 4 
+            {num_seq: "2, 4, 6, "}, // 5
+            {num_seq: "6, 12, 18, "}, // 6
+            {num_seq: "20, 40, 60, "}, // 7
+            {num_seq: "4, 8, 12, "}, // 8
+            {num_seq: "32, 64, 96, "}, // 9
+            {num_seq: "15, 30, 45, "}, // 10
+            {num_seq: "13, 26, 39, "}, // 11
+            {num_seq: "9, 18, 27, "}, // 12
+            {num_seq: "54, 81, 135, "}, // 13
+            {num_seq: "11, 22, 33, "}, // 14
+            {num_seq: "48, 96, 144, "}, // 15
+            {num_seq: "7, 14, 21, "}, // 16
+            {num_seq: "16, 32, 48, "}, // 17
+            {num_seq: "6, 9, 15, "}, // 18
+            {num_seq: "14, 28, 42, "}, // 19
+            {num_seq: "50, 100, 150, "}, // 20
+            {num_seq: "12, 24, 36, "} // 21
+        ]),
         
         present_handle: function(stim) {
             console.log("Ready!");
@@ -141,7 +231,7 @@ function init() {
     exp.accurate = [];
     exp.rt = [];
     
-    exp.condition = (["mock-up"]); // in real experiment, store generating rule here
+    exp.condition = _.sample(["xkc", "sumtwo"]);
     exp.system = {
         Browser : BrowserDetect.browser,
         OS : BrowserDetect.OS,

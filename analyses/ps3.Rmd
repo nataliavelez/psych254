@@ -7,9 +7,10 @@ output: html_document
 
 This is problem set #3, in which we want you to integrate your knowledge of data wrangling with some basic simulation skills and some linear modeling.
 
-```{r}
+```{r Load libraries, message=FALSE, warning=FALSE}
 library(dplyr)
 library(ggplot2)
+library(pander)
 ```
 
 Part 1: Basic simulation and NHST
@@ -20,12 +21,23 @@ Let's start by convincing ourselves that t-tests have the appropriate false posi
 First do this using a `for` loop.
 
 ```{r}
+counter <- 0
+
+for (i in 1:10000) {
+  counter <- ifelse(t.test(rnorm(30))$p.value < 0.05, counter + 1, counter)
+}
 ```
+
+**Answer:** Out of 10,000 one-sample t-tests, `r counter` were significant, representing a false positive rate of `r round(counter/10000,4)*100`%.
 
 Next, do this using the `replicate` function:
 
 ```{r}
+sim.fun <- function () t.test(rnorm(30))$p.value
+sim.sig <- sum(replicate(10000, sim.fun()) < 0.05)
 ```
+
+**Answer:** Out of 10,000 one-sample t-tests, `r sim.sig` were significant, representing a false positive rate of `r round(sim.sig/10000, 4)*100`%.
 
 Ok, that was a bit boring. Let's try something moderately more interesting - let's implement a p-value sniffing simulation, in the style of Simons, Nelson, & Simonsohn (2011).
 
@@ -35,15 +47,25 @@ First, write a function that implements this sampling regime.
 
 ```{r}
 double.sample <- function () {
+  d <- rnorm(30)
+  result <- t.test(d)
+  if (0.05 < result$p.value & result$p.value < 0.25) {
+    d <- c(d, rnorm(30))
+    result <- t.test(d)
+  }
+  return(result$p.value)
 }
 ```
 
 Now call this function 10k times and find out what happens. 
 
 ```{r}
+dbl.sig <- sum(replicate(10000, double.sample()) < 0.05)
 ```
 
 Is there an inflation of false positives? How bad is it?
+
+**Answer:** Out of 10,000 tests, `r dbl.sig` were significant, which amounts to a `r round(dbl.sig/10000, 4)*100`% false positive rate, or a `r round((dbl.sig-sim.sig)/sim.sig*100,2)`% increase from the original false positive rate.
 
 Now modify this code so that you can investigate this "double the sample" rule in a bit more depth. Let's see what happens when you double the sample ANY time p > .05 (not just when p < .25), or when you do it only if p < .5 or < .75. How do these choices affect the false positive rate?
 
@@ -52,9 +74,27 @@ HINT: Try to do this by making the function `double.sample` take the upper p val
 HINT 2: You may need more samples. Find out by looking at how the results change from run to run.
 
 ```{r}
+double.sample <- function (p.upper) {
+  d <- rnorm(30)
+  result <- t.test(d)
+  if (0.05 < result$p.value & result$p.value < p.upper) {
+    d <- c(d, rnorm(30))
+    result <- t.test(d)
+  }
+  return(result$p.value)
+}
+
+upper.fun <- function (x) sum(replicate(100000, double.sample(x)) < 0.05)
+upper.sig <- data.frame(n = 100000, p = c(0.05, 0.25, 0.5, 0.75)) %>%
+  mutate(sig = sapply(p, upper.fun),
+         falsepos = round(sig/100000*100,2),
+         pctchg = round((sig-sig[p == 0.05])/sig[p == 0.05]*100, 2))
+  
 ```
 
 What do you conclude on the basis of this simulation? How bad is this kind of data-dependent policy?
+
+**Answer:** In all cases, 'p-sniffing' increased the false positive rate from `r with(upper.sig, falsepos[p == 0.05])`%. As the upper-bound p increased, so too did the false positive rate: when $p_{upper} = 0.75$, the false positive rate was `r with(upper.sig, pctchg[p == 0.75])`% higher than with no resampling. Therefore, re-sampling when the data are not significant considerably increases the risk of false discoveries.
 
 
 Part 2: The Linear Model
@@ -69,6 +109,7 @@ and vitamin C. This is super simple. (Try `?ToothGrowth`).
 First plot the data, we'll use `qplot` to understand how `len` (tooth length) depends on `dose` (amount of Vitamin C) and `supp` (delivery method).
 
 ```{r}
+qplot(dose, len, data = ToothGrowth, colour = supp, geom = c("jitter", "smooth"), width = 0.1, method = "lm", xlab = "Dose (mg)", ylab = "Tooth length")
 ```
 
 So now you see what's going on. 
@@ -76,6 +117,7 @@ So now you see what's going on.
 Next, always make a histogram of the DV before making a linear model! This reveals the distribution and can be helpful in choosing your model type.
 
 ```{r}
+qplot(len, data = ToothGrowth)
 ```
 
 Now make a linear model of tooth lengths using `lm`. Try making one with main effects and interactions and another with just main  effects. Make sure to assign them to variables so that you can get them later.
