@@ -35,7 +35,8 @@ function xkc() {
     return {num_seq: seq.slice(0, -1).join(", ")+", ",
             answer: seq.slice(-1).toString(),
             rule: ((k == 1)? "Add " + c + " to each number":
-                    "Multiply by " + k + " and add " + c)};
+                    "Multiply by " + k + " and add " + c),
+            ruletype: "xkc"};
 }
 
 function sumtwo() {
@@ -49,21 +50,30 @@ function sumtwo() {
     // Return sequence object
     return {num_seq: seq.slice(0, -1).join(", ")+", ",
             answer: seq.slice(-1).toString(),
-            rule: "Sum the last two numbers"};
+            rule: "Sum the last two numbers",
+            ruletype: "sumtwo"};
 }
 
 /* Assemble sequences */
 function makeseqs(condition) {
     
     var seq = [];
+    /*
+    // Uncomment for longer experiment
     var conds = {"xkc": 11,
                  "sumtwo": 89};
+    var numtrials = 100;
+    */
+    
+    var conds = {"xkc": 6,
+                 "sumtwo": 44};
+    var numtrials = 50;
     
     for (i = 0; i < conds[condition]; i++) {
         seq.push(sumtwo());
     }
     
-    while (seq.length < 100) {
+    while (seq.length < numtrials) {
         var test = xkc();
         if (test.answer < 200) {
             seq.push(test);
@@ -143,6 +153,7 @@ function make_slides(f) {
 			 "response": $("#ans").val(),
              "answer": this.stim.answer,
              "rule": this.stim.rule,
+             "ruletype": this.stim.ruletype,
              "accuracy": $("#ans").val() == this.stim.answer,
              "rt_in_seconds": (Date.now() - exp.trialT)/1000
 			 });
@@ -191,11 +202,15 @@ function make_slides(f) {
         },
         
         nextTrial: function () {
-          exp.RT = Date.now() - exp.trialT;
-          this.log_responses();
-          $("#testans").val("");
-            $("#rule").val("");
-          _stream.apply(this);
+            if ($("#testans").val() == "" || $("#rule").val() == "") {
+                return
+            } else {
+                exp.RT = Date.now() - exp.trialT;
+                this.log_responses();
+                $("#testans").val("");
+                $("#rule").val("");
+                _stream.apply(this);
+            }
         },
         
         log_responses : function() {
@@ -208,6 +223,24 @@ function make_slides(f) {
         }
     });
     
+    slides.survey =  slide({
+    name : "survey",
+    submit : function(e){
+      //if (e.preventDefault) e.preventDefault(); // I don't know what this means.
+      exp.subj_data = {
+        language : $("#language").val(),
+        enjoyment : $("#enjoyment").val(),
+        asses : $('input[name="assess"]:checked').val(),
+        age : $("#age").val(),
+        gender : $("#gender").val(),
+        education : $("#education").val(),
+        comments : $("#comments").val(),
+      };
+      exp.go(); //use exp.go() if and only if there is no "present" data.
+    }
+  });
+
+
   slides.thanks = slide({
     name : "thanks",
     start : function() {
@@ -221,6 +254,7 @@ function make_slides(f) {
       setTimeout(function() {turk.submit(exp.data);}, 1000);
     }
   });
+    
 
   return slides;
 }
@@ -241,7 +275,7 @@ function init() {
         screenUW: exp.width
     };
     //blocks of the experiment:
-    exp.structure=["i0", "sequence", "test_instruct", "testseq", "thanks"]; // add test section
+    exp.structure=["i0", "sequence", "test_instruct", "testseq", "survey", "thanks"]; // add test section
   
     exp.data_trials = [];
     //make corresponding slides:
