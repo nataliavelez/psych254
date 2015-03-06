@@ -48,6 +48,10 @@
 	letter-spacing: 1px;
 }
 
+.top .screen:focus {
+    outline: none;
+}
+
 /* Clear floats */
 .keys, .top {overflow: hidden;}
 
