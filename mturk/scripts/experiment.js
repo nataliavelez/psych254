@@ -27,7 +27,7 @@ function xkc() {
     var c = randint(10); // intercept
     
     // Add to sequence using rule
-    for (var i = 1; i < 5; i++) {
+    for (var i = 1; i < 7; i++) {
         seq[i] = Math.max(k,1)*seq[i-1]+c;
     }
     
@@ -43,7 +43,7 @@ function sumtwo() {
     var seq = [randint(20), randint(20)]; // Seed
     seq.sort(function(a, b){return a-b});
     
-    for (var i = 2; i < 5; i++) {
+    for (var i = 2; i < 7; i++) {
         seq[i] = seq[i-2] + seq[i-1]; // Apply sum-two rule
     }
     
@@ -75,7 +75,7 @@ function makeseqs(condition) {
     
     while (seq.length < numtrials) {
         var test = xkc();
-        if (test.answer < 200) {
+        if (test.answer < 350) {
             seq.push(test);
         }
     }
@@ -109,6 +109,7 @@ function make_slides(f) {
 	 present_handle: function(stim) {
          $("#submit").show();
 		 $("#continue").hide();
+         $("#sequence > .err").html("&nbsp;");
 		 
 		 this.stim = stim;
 		 
@@ -119,6 +120,7 @@ function make_slides(f) {
 	 
 	 button : function() {
 		 if ($("#ans").val() == null || $("#ans").val() == "") {
+             $("#sequence > .err").html("Please complete the sequence before continuing.");
 			 return
 		 } else {
 			 if ($("#ans").val() == this.stim.answer) {
@@ -131,7 +133,7 @@ function make_slides(f) {
                     ". The rule is: " + this.stim.rule + ".");
                  console.log("Incorrect!"); // debugging
 			 }
-             
+             $("#sequence > .err").html("&nbsp;");
              $("#submit").hide();
              $("#continue").show();
 		 }
@@ -197,18 +199,21 @@ function make_slides(f) {
         present_handle: function(stim) {
             console.log("Ready!");
             this.stim = stim;
+            $("#testseq > .err").html("&nbsp;")
             $(".numseq").html(stim.num_seq);
             exp.trialT = Date.now();
         },
         
         nextTrial: function () {
             if ($("#testans").val() == "" || $("#rule").val() == "") {
+                $("#testseq > .err").html("Please complete the sequence and guess the rule before continuing.");
                 return
             } else {
                 exp.RT = Date.now() - exp.trialT;
                 this.log_responses();
                 $("#testans").val("");
                 $("#rule").val("");
+                $("#sequence > .err").html("&nbsp;");
                 _stream.apply(this);
             }
         },
