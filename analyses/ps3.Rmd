@@ -114,26 +114,50 @@ qplot(dose, len, data = ToothGrowth, colour = supp, geom = c("jitter", "smooth")
 
 So now you see what's going on. 
 
+**Conclusion:** Tooth length increases linearly with vitamin C dosage. In addition, it seems that there may be a main effect of delivery method on tooth length, where guinea pigs who were administered orange juice have longer teeth, as well as an interaction between delivery method and dosage. However, it is not immediately obvious whether these are significant.
+
 Next, always make a histogram of the DV before making a linear model! This reveals the distribution and can be helpful in choosing your model type.
 
 ```{r}
 qplot(len, data = ToothGrowth)
 ```
 
+**Conclusion:** The data are *not* normally distributed; rather, they are negatively skewed.
+
 Now make a linear model of tooth lengths using `lm`. Try making one with main effects and interactions and another with just main  effects. Make sure to assign them to variables so that you can get them later.
 
 ```{r}
+tooth.model <- lm(len ~ dose + supp, ToothGrowth)
+tooth.model2 <- lm(len ~ dose * supp, ToothGrowth)
+anova(tooth.model, tooth.model2)
+summary(tooth.model2)
 ```
+
+**Conclusion:** The full model, which includes an interaction term between dosage and delivery method, fits the data better than the model with just main effects (F(3, 56) = 50.36, p < 0.001). There is a main effect of dose ($\beta$ = 7.81, t = 6.54, p < 0.001) on tooth length, where guinea pigs who received higher dosages of vitamin C had longer teeth. There is also a main effect of delivery method ($\beta$ = -8.26, t = -3.69, p < 0.001), where guinea pigs who received orange juice had longer teeth. Finally, there is an interaction between dosage and delivery type (b = 3.904, t = 2.31, p < 0.05): tooth length increased more sharply as a function of dosage among guinea pigs who received vitamin C supplements.
 
 Now try taking out the intercept, using a -1 term in the formula. what does this do?
 
 ```{r}
+tooth.model3 <- lm(len ~ dose * supp -1, ToothGrowth)
 ```
 
+**Conclusion:** Taking out the intercept dramatically improves model fit (with intercept: $R^2$ = 0.72; without intercept: $R^2$ = 0.96). It also changes how delivery method is evaluated. While the previous model compared average tooth length between the two delivery methods, this model tests the average tooth length of each group separately against 0.
+
 Thought question: Take a moment to interpret the coefficients of the model. 
+**Note:** The intercepts are more difficult to interpret when the intercept is removed, so the answers below refer to `tooth.model2`.
 Q1 - What are the units?
+
+* dose ($\beta$ = 7.81) - increase in tooth length (in unspecified units) by unit of dosage (length units/mg)
+* suppVC - difference in mean tooth length between the vitamin C and the orange juice groups (length units)
+* dose:suppVC - difference in rate of change of tooth length by unit of dosage (length units/mg)
+
 Q2 - How does the interaction relate to the plot?
+
+The estimate of the interaction term is difference between the slope of the dose-length curve for the vitamin C group and the slope of the orange juice group. The sign of the coefficient indicates that this slope should be steeper for the vitamin C group than for the orange juice group, which is indeed reflected in the plot.
+
 Q3 - Should there be an interaction in the model? What does it mean? How important is it?
+
+The plot seemed to suggest that there would be an interaction in the model. One plausible interpretation for this interaction is that it reflects a constraint on guinea pig tooth length: while guinea pigs grow longer teeth when they are given orange juice, their teeth can only grow so much. Therefore, the interaction might not reflect anything about the "treatments" per se. How 'important' it is depends on the goal of the treatment: if it is to find the most efficient or cost-effective way to increase tooth length in guinea pigs, then the data suggest that orange juice is more effective at lower doses.
 
 Now make predictions from the model you like the best. What should happen with
 doses of 0, 1.5, 2.5, and 10 under both supplements? 
@@ -143,22 +167,37 @@ HINT: use the `predict` function ...
 HINT 2: you will have to make a dataframe to do the prediction with, so use something like `data.frame(dose=...)`.
 
 ```{r}
+new.doses <- data.frame(supp = rep(c("OJ", "VC"), each = 4),
+                        dose = rep(c(0, 1.5, 2.5, 10), 2))
+
+new.doses$estimate <- predict(tooth.model2, new.doses)
+pander(new.doses)
 ```
 
 Now plot the residuals from the original model. How do they look?
 HINT: `?resid`
 
 ```{r}
+d <- ToothGrowth
+d$resid <- resid(tooth.model2)
+
+ggplot(d, aes(x = dose, y = resid, colour = supp)) +
+  geom_jitter(position = position_jitter(width = .1)) +
+  geom_smooth(se = F)
 ```
 
+** Conclusion:** There seems to be a non-random pattern in the residuals, suggesting that there is some explanatory information that is not accounted for by the model. (This non-random structure remains when the intercept is removed from the model.) It is possible that a linear fit is not the best way to capture the data, or that the data should have been fit to a different distribution (they did not seem normally distributed in the histogram above).
 
 BONUS: test them for normality of distribution using a quantile-quantile plot.
 
 HINT: `?qqplot` and `?qqnorm`
 
 ```{r}
+qqnorm(ToothGrowth$len)
+qqline(ToothGrowth$len)
 ```
 
+**Conclusion:** The data are *not* normally distributed; the sample quantiles diverge from theoretical quantiles at the tails.
 
 2B: Exploratory Linear Modeling
 -------------------------------
@@ -168,18 +207,44 @@ What the heck is going on? Load data from Frank, Vul, Saxe (2011, Infancy), a st
 Try to figure out what the most reasonable linear model of the data is.
 
 ```{r}
-d <- read.csv("../data/FVS2011-hands.csv")
-
+babies <- read.csv("../data/FVS2011-hands.csv")
+baby.model <- lm(hand.look ~ condition, babies)
+baby.model2 <- lm(hand.look ~ condition + age, babies)
+baby.model3 <- lm(hand.look ~ condition * age, babies)
+pander(AIC(baby.model, baby.model2, baby.model3))
+anova(baby.model, baby.model2, baby.model3)
+summary(baby.model3)
 ```
+**Conclusion:** Despite its complexity, the interactive model best captures the data. 
 
 Plot that model on the same plot as the data.
 
 HINT: you can do this either using `predict` or (if you are feeling confident of your understanding of the models) using the built-in linear models in `ggplot`'s `geom_smooth`. 
 
 ```{r}
+# Create model estimates with SE
+baby.line <- data.frame(age = rep(seq(3, 27, .25),2))
+baby.line$condition <- rep(levels(babies$condition), each = nrow(baby.line)/2)
+baby.predict <- predict(baby.model3, newdata = baby.line, se = T)
+baby.line$hand.look <- baby.predict$fit
+baby.line$se <- baby.predict$se.fit
+
+# Plot predictions on data
+ggplot(babies, aes(x = age, y = hand.look, colour = condition)) +
+  geom_point() +
+  geom_smooth(data = baby.line, aes(ymin = hand.look - 1.96*se, ymax = hand.look + 1.96*se),
+              stat = "identity") +
+  geom_line(data = baby.line, aes(se = se)) + 
+  xlab("Age (months)") +
+  ylab("Time spent looking at hands (seconds)") +
+  scale_colour_discrete(name = "Condition",
+                        labels = c("White background", "Complex background"))
 ```
 
 What do you conclude from this pattern of data?
+
+**Conclusions:** There is a main effect of age on looking time: as children grow older, they attend more and more to hands ($\beta$ = 0.003, t = 2.67, p < 0.01). There is no effect of background type on infants' attention to hands ($\beta$ = -0.03, t = -1.31, p = 0.19). There is, however, an interaction between condition and age: there is a more dramatic difference in looking time as a function of age in trials where hands were shown on a complex background, relative to trials where the hands were shown on a white background. These results suggest that infants' attention sharpens with age: the oldest children in the study were able to override the distractors in the complex environment to attend to the hands. When hands were presented with hands on simple backgrounds, children again attended to the hands longer with age---these results suggest that older children are not just better able to ignore distractors, but also better able to attend to the hands.
+
 
 3: Linear Mixed Effect Models
 =============================
@@ -189,7 +254,9 @@ standard by subject, by item LMs, as well as the standard (no repeated measures)
 
 The dataset here is from Stiller, Goodman, & Frank (2014), a paper on children's pragmatic inferences. We saw the paradigm in the counterbalancing lecture: it's three faces: a smiley, a smiley with glasses, and a smiley with a hat and glasses. When told "my friend has glasses" do kids pick the one with the glasses and no hat? `age.group` is the kids' age group, `condition` is either "label," described above, or "no label," which was a control condition in which kids picked without hearing the term "glasses" at all. 
 
-```{r}
+```{r LMEM practice, warning=FALSE, message=FALSE}
+library(lme4)
+
 d <- read.csv("../data/scales.csv")
 d$age.group <- factor(d$age.group)
 ```
@@ -197,6 +264,21 @@ d$age.group <- factor(d$age.group)
 Always begin with a histogram!
 
 ```{r}
+# Summarise data to derive 'accuracy' measure from 'correct'
+d.summ <- d %>%
+  group_by(subid, condition) %>%
+  summarise(age.group = unique(age.group),
+            age = mean(age),
+            accuracy = sum(correct)/length(correct))
+
+# Plot histogram
+ggplot(d.summ, aes(x = accuracy)) +
+  geom_histogram(binwidth = 0.25) +
+  xlim(0, 1) +
+  facet_grid(~ condition) +
+  ggtitle("Accuracy (proportion of trials correct) by subject") +
+  xlab("Accuracy") +
+  ylab("Count")
 ```
 
 Brief Confidence Interval Digression
@@ -205,7 +287,14 @@ Brief Confidence Interval Digression
 Start out by setting up a function for a 95% CI using the normal approximation.
 
 ```{r}
+sem <- function(x) {
+  return(sd(x)/sqrt(length(x)))
+}
+
 ci95.norm <- function(x) {
+  # Input: vector of measurements
+  lim <- qnorm(0.975)*sem(x)
+  return(c(mean(x)-lim, mean(x)+lim))
 }
 ```
 
@@ -213,6 +302,8 @@ But the number of participants in a group is likely to be < 30, so let's also co
 
 ```{r}
 ci95.t <- function(x) {
+  lim <- qt(0.975, length(x)-1)*sem(x)
+  return(c(mean(x)-lim, mean(x)+lim))
 }
 ```
 
@@ -245,14 +336,32 @@ Now make 95% confidence intervals across participants using all the methods abov
 - Bootstrap percentile using my code
 
 ```{r}
+# Normal
+ci95.norm(d.summ$accuracy)
+
+# t-distribution
+ci95.t(d.summ$accuracy)
+
+# Bootstrap percentile (boot.ci)
+mean.fun <- function(dat, idx) mean(dat[idx], na.rm = TRUE)
+d.boot <- boot(d.summ$accuracy, mean.fun, R = 10000)
+boot.ci(d.boot, type = "perc")
+
+# Bootstrap percentile (code provided)
+c(ci.low(d.summ$accuracy), ci.high(d.summ$accuracy))
 ```
 
 Now plot the data by age and condition using `dplyr` and `ggplot2`. Plot some CIs on here - extra credit if you plot all of them and compare visually (you'll need `position = position_dodge()` or some other way to offset them).  
 
 ```{r}
+ggplot(d.summ, aes(x = age, y = accuracy, colour = condition)) +
+  geom_jitter() +
+  geom_smooth(method = "lm")
 ```
 
 What do you conclude about confidence interval computation?
+
+**Conclusions:** Except for the confidence intervals generted using the code provided, all confidence interval estimates provided similar estimates. It is possible that confidence intervals using certain estimates, such as the normal or t-distribution CIs, may be inaccurate because the data are not normally distributed, 0-1 bounded, etc., but they do not seem to have affected the results here.
 
 Back to LMEMs
 -------------
@@ -266,11 +375,20 @@ OK, now do a basic GLM over the entire data frame, using `age.group`, `condition
 NOTE: this model is not appropriate, because it assumes that each subject's observations are independent from one another. It's still fine to do the analysis, though: it can tell you a lot about the data and is easy and fast to fit, as long as you know that you can't trust the p-values!
 
 ```{r}
+d.model <- glm(correct ~ age.group * condition, family = "binomial", d)
+summary(d.model)
 ```
 
 Let's now use `dplyr` to get data frames for by-items (`msi`) and by-subjects (`mss`) analyses. `msi` should contain the mean ratings for every item and `mss` should contain the mean ratings for every subject.
 
 ```{r}
+msi <- d %>%
+  group_by(trial, condition, age.group) %>%
+  summarise(rating = mean(correct))
+
+mss <- d%>%
+  group_by(subid, condition, age.group) %>%
+  summarise(rating = mean(correct))
 ```
 
 Now do standard linear models on each of these.
@@ -278,12 +396,20 @@ Now do standard linear models on each of these.
 NOTE: These are not strictly correct either because of the normal approximation on percent correct (model doesn't know it's 0 - 1 bounded and could give you standard error that goes above 1). Again, useful to do and see what happens.
 
 ```{r}
+msi.model <- lm(rating ~ age.group * condition, msi)
+summary(msi.model)
+
+mss.model <- lm(rating ~ age.group * condition, mss)
+summary(mss.model)
 ```
 
 Do ANOVA on these. Note that ANOVA doesn't let you figure out what is going on with individual levels of age.
 
 ```{r}
+AIC(msi.model, mss.model)
 ```
+
+**Conclusion:** I was not able to use ANOVA to compare the two models because the original dataset was compressed to a different number of groups. Instead, I used AIC to compare model fit. Based on this measure, it seems that item-wise performance is better predicted by condition and age group than subject-wise performance.
 
 On to linear mixed effect models. Create the maximal random effects model a la Barr et al. (2013). Does it converge? If not, what will you do to make it converge? (The internet can be your friend here).
 
@@ -291,11 +417,14 @@ HINT: try simplifying your model to a "semi-maximal" model. Bonus: try using a d
 
 HINT: make sure that you consider which random effects are appropriate. Consider which observations are within/between subjects. E.g. having a random coefficient for age by subject doesn't make sense, because each subject has only one age.
 
-
 ```{r}
+full.model <- glmer(correct ~ condition * age.group + (1|subid) + (1|trial), family = "binomial", d)
+summary(full.model)
 ```
 
 How do these coefficients compare with the independent coefficients linear model? What do you conclude?
+
+**Conclusions:** Rather than treating 'trial' as a slope, I instead treated it as an intercept term. With this change, the model did converge Intuitively, a random intercept better captures any item-specific effects, as there is not a deep sequential relationship between trials that would be captured by a random slope term. Compared to the model with no mixed effects, the magnitude of the coefficients increased; this suggests that random item- and subject-specific variations in the data were muting differences between conditions and age groups.
 
 Which random effects make the most difference? Find out using `ranef`. Plot the random effects for subject and item.
 
@@ -305,9 +434,15 @@ Which random effects make the most difference? Find out using `ranef`. Plot the 
 Make the minimal random effects model with just a subject intecept. How does this compare?
 
 ```{r}
+subj.model <- glmer(correct ~ condition * age.group + (1|subid), family = "binomial", d)
+
+anova(full.model, subj.model)
 ```
+**Conclusion:** The random effects model (AIC: 661.24) provides a marginally better fit of the data than the model without an intercept (AIC: 662.72; $\chi^2(1) = 3.48, p = 0.06$).
 
 Get an estimate of the significance value for the coefficient on the `age*condition` interaction by using anova to compare between your semi-maximal model and the model without an intercept.
 
 ```{r}
+anova(d.model, subj.model)
+AIC(d.model, subj.model)
 ```
